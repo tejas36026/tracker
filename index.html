@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Typing Tracker</title>
+    <style>
+
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  /* You might want a base font family and color here that themes can override */
+  font-family: sans-serif;
+  color: #333; /* Default text color for light theme */
+  background-color: #f4f4f4; /* Default background for light theme */
+  transition: background-color 0.3s ease, color 0.3s ease; /* Smooth theme transition */
+}
+
+
+body.theme-light {
+  background-color: #ffffff; /* Or your specific light theme background */
+  color: #2c3e50;          /* Or your specific light theme text color */
+}
+
+
+body.theme-dark {
+  background-color: #2c3e50; /* Example dark background */
+  color: #ecf0f1;          /* Example light text for dark theme */
+}
+
+body.theme-dark #jsEditor,
+body.theme-dark #highlighted-output-container {
+    /* Specific styles for editor/output in dark mode if needed */
+    /* e.g., border-color: #555; */
+}
+
+
+
+body.theme-blue-neon {
+  background-color: #0d0d2b; /* Dark blue base */
+  color: #00ffcc;          /* Neon cyan text */
+}
+body.theme-blue-neon #jsEditor,
+body.theme-blue-neon #highlighted-output-container {
+    /* Specific styles for editor/output in blue-neon mode if needed */
+    /* e.g., border: 1px solid #00ffcc; */
+    /* caret-color: #00ffcc; */
+}
+
+        .highlight-fast-no-mistake { background-color: var(--highlight-yellow-bg); border-bottom: 2px solid var(--color-warning); font-weight: 500;}
+
+.highlight-slow { background-color: var(--highlight-green-bg); opacity: 1; }
+.highlight-typed { /* No special style, or a very subtle one if desired */ }
+.highlight-anomaly-speed { color: var(--color-error) !important; font-weight: bold; /* border-bottom: 2px dashed var(--color-error); */ } /* Removed border to keep focus on text color */
+
+/* Neon theme specific overrides for better contrast/effect */
+body.theme-blue-neon .highlight-pasted { text-shadow: 0 0 3px var(--color-error); }
+body.theme-blue-neon .highlight-fast-no-mistake { text-shadow: 0 0 3px var(--color-warning); }
+body.theme-blue-neon .highlight-no-mistake { background-color: rgba(var(--color-warning-rgb), 0.2); text-shadow: 0 0 2px var(--color-warning); }
+body.theme-blue-neon .highlight-corrected { text-shadow: 0 0 3px var(--color-success); }
+body.theme-blue-neon .highlight-slow { opacity: 1; text-shadow: 0 0 2px var(--color-success); }
+body.theme-blue-neon .highlight-anomaly-speed { text-shadow: 0 0 5px var(--color-error); }
+ 
+
+/* In both index.html and dashboard.html <style> sections */
+    :root { /* DEFAULT THEME = LIGHT */
+    --body-background-color: #f4f6f8; /* Light grey */
+    --editor-bg: #ffffff;
+    --header-bg: rgba(255, 255, 255, 0.9);
+    --text-primary: #2c3e50;   /* Dark blue-grey for text */
+    --text-secondary: #7f8c8d; /* Medium grey for secondary text */
+    --border-color: #e0e0e0;   /* Light grey border */
+    --color-primary-01: #3498db; /* A pleasant blue */
+    --color-error: #e74c3c;    /* A clear red */
+    --color-warning: #f39c12;  /* A clear orange/yellow */
+    --color-success: #2ecc71;  /* A clear green */
+    --color-bar-1: rgba(52, 152, 219, 0.7);  /* Primary blue with opacity */
+    --color-bar-2: rgba(243, 156, 18, 0.7); /* Warning orange with opacity */
+    --color-line-1: rgba(52, 152, 219, 0.8);
+    --color-line-2: rgba(231, 76, 60, 0.8); /* Error red with opacity */
+    --btn-primary-bg: var(--color-primary-01);
+    --btn-primary-text: #ffffff;
+    --btn-hover-bg: #2980b9; /* Darker shade of primary blue */
+
+    /* Highlight colors for main.html text */
+    --highlight-red-bg: rgba(231, 76, 60, 0.15);
+    --highlight-yellow-bg: rgba(243, 156, 18, 0.15);
+    --highlight-green-bg: rgba(46, 204, 113, 0.1);
+    --color-warning-rgb: 243, 156, 18; /* For rgba in JS if needed */
+
+    /* Modal specific (if different from editor-bg) */
+    --modal-content-bg: var(--editor-bg);
+    --modal-bg-overlay: rgba(0, 0, 0, 0.5);
+
+    /* SVG icon stroke color */
+    --icon-stroke-color: var(--text-secondary);
+    --icon-stroke-color-active: var(--text-primary);
+}
+
+body.theme-dark {
+    --body-background-color: #1a1d24; /* Darker */
+    --editor-bg: #232730;      /* Slightly lighter than body */
+    --header-bg: rgba(35, 39, 48, 0.85);
+    --text-primary: #e0e0e0;   /* Off-white */
+    --text-secondary: #909090; /* Lighter grey */
+    --border-color: #383c4a;   /* Darker border */
+    --color-primary-01: #5dade2; /* Lighter blue for dark mode */
+    --color-error: #ff6b6b;
+    --color-warning: #ffc078;
+    --color-success: #76d7c4;
+    --color-bar-1: rgba(93, 173, 226, 0.7);
+    --color-bar-2: rgba(255, 192, 120, 0.7);
+    --color-line-1: rgba(93, 173, 226, 0.8);
+    --color-line-2: rgba(255, 107, 107, 0.8);
+    --btn-primary-bg: var(--color-primary-01);
+    --btn-primary-text: #1a1d24; /* Dark text on light blue button */
+    --btn-hover-bg: #4a90e2; /* Slightly different hover */
+
+    --highlight-red-bg: rgba(255, 107, 107, 0.2);
+    --highlight-yellow-bg: rgba(255, 192, 120, 0.2);
+    --highlight-green-bg: rgba(118, 215, 196, 0.15);
+    --color-warning-rgb: 255, 192, 120;
+
+    --modal-content-bg: var(--editor-bg);
+    --modal-bg-overlay: rgba(0, 0, 0, 0.7);
+
+    --icon-stroke-color: var(--text-secondary);
+    --icon-stroke-color-active: var(--text-primary);
+}
+
+body.theme-blue-neon {
+    --body-background-color: #0a0a23;
+    --editor-bg: #00001a;
+    --header-bg: rgba(10, 10, 40, 0.9);
+    --text-primary: #00e5ff;      /* Bright Neon Cyan */
+    --text-secondary: #00aacc;    /* Dimmer Neon Cyan */
+    --border-color: #0077ff;      /* Neon Blue Border */
+    --color-primary-01: #00e5ff;  /* Neon Cyan as primary accent */
+    --color-error: #ff3366;      /* Neon Pink/Red */
+    --color-warning: #ffff66;    /* Neon Yellow */
+    --color-success: #66ff66;    /* Neon Green */
+    --color-bar-1: rgba(0, 229, 255, 0.7);
+    --color-bar-2: rgba(255, 255, 102, 0.7);
+    --color-line-1: rgba(0, 229, 255, 0.8);
+    --color-line-2: rgba(255, 51, 102, 0.8);
+    --btn-primary-bg: var(--color-primary-01);
+    --btn-primary-text: #0a0a23; /* Dark text on bright button */
+    --btn-hover-bg: #00c4dd;
+
+    --highlight-red-bg: rgba(255, 51, 102, 0.3);
+    --highlight-yellow-bg: rgba(255, 255, 102, 0.3);
+    --highlight-green-bg: rgba(102, 255, 102, 0.2);
+    --color-warning-rgb: 255, 255, 102;
+
+    --modal-content-bg: var(--editor-bg);
+    --modal-bg-overlay: rgba(0, 10, 40, 0.8);
+
+    --icon-stroke-color: var(--text-secondary);
+    --icon-stroke-color-active: var(--text-primary);
+     font-family: 'VT323', monospace; /* Apply to whole body for neon */
+}
+
+/* Update icon colors */
+.btn svg, .theme-controls .theme-btn svg, .theme-controls-dashboard .theme-btn-dashboard svg {
+    stroke: var(--icon-stroke-color); /* Use CSS variable for stroke */
+}
+.btn:hover svg, .theme-btn:hover svg, .theme-btn-dashboard:hover svg {
+    stroke: var(--btn-primary-text); /* Or a specific hover icon color */
+}
+.theme-btn.active-theme svg, .theme-btn-dashboard.active-theme svg {
+    stroke: var(--btn-primary-text) !important; /* Ensure active icon matches text */
+}
+
+/* Ensure calendar picker icon inverts on dark/neon themes for date inputs */
+body.theme-dark .filters-container input[type="date"]::-webkit-calendar-picker-indicator,
+body.theme-blue-neon .filters-container input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+}
+body.theme-light .filters-container input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: none; /* Explicitly reset for light theme */
+}
+
+/* Text input placeholder color */
+textarea::placeholder { color: var(--text-secondary); opacity: 1; }
+#jsEditor { opacity: 1; /* Remove the 0.3 opacity from jsEditor */ }
+
+/* General chart text color (Chart.js often needs direct config, but this helps some elements) */
+.chart-container text, .chart-container .tick text { /* SVG text elements */
+    fill: var(--text-secondary) !important;
+}
+.chart-container .chartjs-legend-title, .chart-container .chartjs-axis-title { /* Chart.js specific classes if they exist */
+    color: var(--text-secondary) !important;
+}
+body.theme-blue-neon .dashboard-header h1,
+body.theme-blue-neon .metric-card h3,
+body.theme-blue-neon .metric-card .value,
+body.theme-blue-neon .daily-insight-card h4 {
+    text-shadow: 0 0 3px var(--color-primary-01), 0 0 5px var(--color-primary-01);
+}
+
+        .header {
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--header-bg);
+            backdrop-filter: blur(8px);
+            position: sticky;
+            top: 0;
+            z-index: 1000; /* Header above content but below modal */
+        }
+
+        .logo span { font-size: 1.5em; font-weight: bold; color: var(--color-primary-01); }
+
+        
+        .actions-group { display: flex; align-items: center; gap: 12px; }
+
+        /* Button Styling (inspired by hamburger-dropdown example) */
+        .btn {
+            padding: 8px 15px; /* Consistent padding */
+            font-size: 14px; /* Match label font-size */
+            font-weight: 500; /* Match label font-weight */
+            border: 1px solid var(--border-color);
+            border-radius: 6px; /* Slightly more rounded */
+            background-color: var(--editor-bg);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            transition: all var(--transition-fast);
+        }
+        .btn:hover:not(:disabled) {
+            background-color: var(--btn-hover-bg);
+            color: var(--btn-primary-text);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background-color: var(--editor-bg);
+            color: var(--text-secondary);
+        }
+        .btn-primary {
+            background-color: var(--btn-primary-bg);
+            color: var(--btn-primary-text);
+            border-color: var(--btn-primary-bg);
+        }
+        .btn-primary:hover:not(:disabled) {
+            background-color: var(--btn-hover-bg); /* Using btn-hover-bg for consistency */
+            border-color: var(--btn-hover-bg);
+        }
+        .theme-blue-neon .btn { text-shadow: 0 0 2px var(--text-primary); }
+        .btn svg { width: 16px; height: 16px; }
+
+        /* Theme Controls (Specific Button Group) */
+        .theme-controls {
+            display: flex;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            overflow: hidden; /* Clip inner borders */
+        }
+        .theme-controls .theme-btn {
+            padding: 8px 10px !important; /* Override general .btn padding for smaller icon buttons */
+            border: none !important; /* Remove individual borders */
+            border-right: 1px solid var(--border-color) !important; /* Separator */
+            border-radius: 0 !important; /* Square off internal buttons */
+            background-color: transparent; /* Group has bg if needed, buttons transparent */
+            color: var(--text-secondary); /* Default to secondary color */
+        }
+        .theme-controls .theme-btn:last-child { border-right: none !important; }
+        .theme-controls .theme-btn:hover { background-color: var(--btn-hover-bg) !important; color: var(--btn-primary-text) !important; transform: none; box-shadow: none;}
+        .theme-controls .theme-btn.active-theme { background-color: var(--btn-primary-bg) !important; color: var(--btn-primary-text) !important; }
+        .theme-controls .theme-btn svg { stroke: currentColor; width: 16px; height: 16px; }
+
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px; /* Increased gap */
+        }
+
+        .input-area {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            flex-grow: 1;
+            min-height: 300px;
+            border: 1px solid var(--border-color); /* Outer border for the whole input-area */
+            overflow: hidden; /* Clip children if needed */
+            background-color: var(--editor-bg); /* Background for the area */
+        }
+
+        #jsEditor {
+            width: 100%;
+            min-height: 200px;
+            flex-grow: 1;
+
+            font-size: 16px;
+            line-height: 1.6;
+            border: none; /* Remove individual border, parent has it */
+            /* border-bottom: 1px dashed var(--border-color); */ /* Optional separator */
+            background-color: transparent; /* Inherit from parent .input-area */
+            color: var(--text-primary);
+            resize: vertical;
+            box-sizing: border-box;
+        }
+        #jsEditor:focus { outline: none; /* Parent focus can be handled if desired */ }
+
+        #highlighted-output-container {
+             /* border-top: 1px dashed var(--border-color); */ /* Separator from textarea */
+             background-color: transparent; /* Inherit from parent .input-area */
+             min-height: 100px;
+             max-height: 400px;
+             overflow-y: auto;
+             font-size: 16px;
+             line-height: 1.6;
+             /* display: none; */
+             white-space: pre-wrap;
+             word-break: break-all;
+             box-sizing: border-box;
+             color: var(--text-secondary); /* Slightly dimmer for contrast with typed text */
+        }
+        .theme-blue-neon #highlighted-output-container { color: var(--text-secondary); }
+
+
+        .highlight-fast-no-mistake { background-color: var(--highlight-yellow-bg); border-bottom: 2px solid var(--color-warning);}
+        .highlight-corrected-slow { background-color: var(--highlight-green-bg); }
+        .theme-blue-neon .highlight-pasted { text-shadow: 0 0 3px var(--color-error); }
+        .theme-blue-neon .highlight-fast-no-mistake { text-shadow: 0 0 3px var(--color-warning); }
+        .theme-blue-neon .highlight-corrected-slow { text-shadow: 0 0 3px var(--color-success); }
+
+        .stats-bar {
+            padding: 12px 15px; /* Consistent padding */
+            background-color: var(--editor-bg);
+            border: 1px solid var(--border-color);
+            font-size: 14px; /* Match label font-size */
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 20px; /* Row gap, column gap */
+            color: var(--text-secondary);
+        }
+        .stats-bar div { flex-shrink: 0; }
+        .stats-bar span { font-weight: 500; color: var(--text-primary); margin-left: 6px; }
+        .theme-blue-neon .stats-bar span { text-shadow: 0 0 2px var(--text-primary); }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--modal-bg);
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 1050; /* Above header */
+            animation: fadeInModalOverlay 0.3s ease-out forwards;
+        }
+        .modal-overlay.show { display: flex; }
+
+        .dashboard-modal-content {
+            background-color: var(--modal-content-bg);
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 90%;
+            height: 90vh;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Let iframe handle scrolling */
+            animation: slideInModalContent 0.4s ease-out forwards;
+        }
+        .dashboard-modal-header {
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .dashboard-modal-header h3 {
+            margin: 0;
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .theme-blue-neon .dashboard-modal-header h3 { text-shadow: 0 0 3px var(--text-primary); }
+        .dashboard-modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.8em;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 5px;
+            line-height: 1;
+        }
+        .dashboard-modal-close-btn:hover { color: var(--color-error); }
+
+        .dashboard-modal-body {
+            flex-grow: 1;
+            padding: 0; /* Iframe takes full space */
+            overflow: hidden; /* Iframe handles its own scroll */
+        }
+        .dashboard-modal-body iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        @keyframes fadeInModalOverlay { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideInModalContent {
+            from { opacity: 0; transform: translateY(30px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @media print {
+            body { background-color: white; color: black; }
+            .header, .input-area textarea, .modal-overlay { display: none !important; }
+            .main-content { padding: 0; }
+            #highlighted-output-container {
+                border: none; max-height: none; overflow: visible; font-size: 12pt;
+                background-color: white !important; color: black !important;
+            }
+             .highlight-fast-no-mistake, .highlight-corrected-slow {
+                background-color: transparent !important; color: black !important;
+            }
+            .highlight-pasted {
+            border: 1px solid #ccc; /* This is fine for print */
+            padding: 2px; /* Fine for print */
+            background-color: #ffe0e0 !important; /* LIGHT RED BACKGROUND FOR PRINT - THIS IS GOOD */
+            color: black !important; /* TEXT COLOR IS BLACK FOR PRINT */
+        }
+
+            .highlight-fast-no-mistake { font-style: italic; }
+            .highlight-corrected-slow { opacity: 1; }
+            .stats-bar { display: none; }
+        }
+
+        .highlight-slow { background-color: var(--highlight-green-bg); opacity: 1; }
+
+        .highlight-slow {
+            background-color: var(--highlight-green-bg);
+            opacity: 1;
+        }
+
+.highlight-fast-no-mistake {
+    background-color: var(--highlight-yellow-bg);
+    border-bottom: 2px solid var(--color-warning);
+    font-weight: 500;
+}
+
+.highlight-wpm-spike {
+    background-color: rgba(231, 76, 60, 0.1); /* Very light red background */
+    color: var(--color-error); /* Red text */
+    /* border-bottom: 1px dashed var(--color-error); */
+    font-style: italic;
+}
+
+/* If 'highlight-anomaly-speed' is used for WPM spikes text */
+.highlight-anomaly-speed {
+    background-color: rgba(231, 76, 60, 0.1); /* Very light red background */
+    color: var(--color-error);                /* Red text */
+    font-weight: normal;                      /* Normal for text (chart points might be bold) */
+    /* border-bottom: 1px dotted var(--color-error); */
+}
+
+/* Default typed text (optional, if you want a very subtle distinction) */
+.highlight-typed {
+    /* No specific background by default, or a very subtle one */
+    /* background-color: rgba(0,0,0,0.01); */
+}
+
+
+/* Theme-specific overrides for better contrast/effect on Neon */
+body.theme-blue-neon .highlight-corrected {
+    background-color: var(--highlight-green-bg) !important; /* Ensure it overrides */
+    text-shadow: 0 0 3px var(--color-success);
+}
+body.theme-blue-neon .highlight-pasted { text-shadow: 0 0 3px var(--color-error); }
+body.theme-blue-neon .highlight-fast-no-mistake { text-shadow: 0 0 3px var(--color-warning); }
+body.theme-blue-neon .highlight-no-mistake {
+    background-color: rgba(var(--color-warning-rgb), 0.2);
+    text-shadow: 0 0 2px var(--color-warning);
+}
+body.theme-blue-neon .highlight-slow {
+    opacity: 1;
+    text-shadow: 0 0 2px var(--color-success);
+}
+body.theme-blue-neon .highlight-wpm-spike,
+body.theme-blue-neon .highlight-anomaly-speed {
+    background-color: rgba(255, 51, 102, 0.2); /* Neon light red background */
+    color: var(--color-error);                 /* Neon red text */
+    text-shadow: 0 0 3px var(--color-error);
+}
+
+/* Ensure your other highlight rules DON'T use !important unless necessary */
+.highlight-no-mistake {
+  color: #000000 ;  /* Example yellow - adjust to your actual yellow */
+  background-color: #ffff00; /* Light yellow background */
+}
+
+.highlight-corrected {
+  color: #000000;
+  background-color: #00ff00;
+}
+.highlight-pasted {
+    background-color: #f00; /* A light red/pinkish background for highlighting */
+    color: #000000;
+}
+
+#highlighted-output-container {
+    pointer-events: auto !important; /* Or remove the rule that sets it to none */
+}
+#highlighted-output-container span { /* Ensure spans also allow events */
+    pointer-events: auto !important;
+}
+/* --- Core Highlighting for Typed, Pasted, Corrected --- */
+.highlight-yellow-typed {
+    background-color: #ffff00; /* LemonChiffon - Yellow */
+    /* color: black; */ /* Ensure text is readable */
+}
+.highlight-red-pasted {
+    background-color: #ff0000; /* LightCoral - Red */
+    /* color: black; */ /* Ensure text is readable */
+}
+.highlight-green-corrected {
+    background-color: #00ff00; /* LightGreen */
+    /* color: black; */ /* Ensure text is readable */
+}
+
+/* --- Theme-specific overrides (examples) --- */
+/* Light Theme (these are the defaults if no theme class is on body) */
+.theme-light .highlight-yellow-typed { background-color: #ffff00;
+color: #000000; }
+.theme-light .highlight-red-pasted { background-color: #ff0000; 
+    color: #000000; }
+.theme-light .highlight-green-corrected { background-color: #00ff00;
+    color: #000000;  }
+
+/* Dark Theme */
+.theme-dark .highlight-yellow-typed { background-color: #5a5a00; color: #f0f0f0; }
+.theme-dark .highlight-red-pasted { background-color: #8b0000; color: #f0f0f0; }
+.theme-dark .highlight-green-corrected { background-color: #006400; color: #f0f0f0; }
+
+/* Blue Neon Theme */
+.theme-blue-neon .highlight-yellow-typed { background-color: #3D3D00; color: #FFFF00; box-shadow: 0 0 3px #FFFF00; }
+.theme-blue-neon .highlight-red-pasted { background-color: #550000; color: #FF6347; box-shadow: 0 0 3px #FF6347; }
+.theme-blue-neon .highlight-green-corrected { background-color: #003300; color: #32CD32; box-shadow: 0 0 3px #32CD32; }
+
+
+/* For sentence container and tooltips */
+.sentence-block {
+    display: block; /* Each sentence on a new line, helps with clarity */
+    margin-bottom: 2px; /* Optional spacing */
+    white-space: pre-wrap; /* Preserve spaces and newlines within the sentence */
+}
+.sentence-block span {
+    /* Ensure spans within a sentence flow naturally */
+    display: inline;
+}
+.live-sentence {
+    opacity: 1; /* Optional: make live sentence slightly visually distinct */
+}
+
+
+/* Styles for highlighted output container and sentences */
+#highlighted-output-container {
+    /* Add or adjust existing styles like border, padding, height, overflow-y */
+    white-space: normal; /* Allows inline-block children to wrap */
+    line-height: 1.8;    /* Increased for better readability of inline blocks with tooltips */
+    padding: 10px;
+    /* Example:
+    border: 1px solid #ccc;
+    height: 300px;
+    overflow-y: auto;
+    */
+}
+
+.sentence-block {
+    display: inline-block;  /* Key change: Sentences flow in-line but act like blocks */
+    margin-right: 0.6em;   /* Space between sentences on the same line */
+    margin-bottom: 0.4em;  /* Space below sentences if they wrap */
+    padding: 3px 5px;      /* Internal padding for the sentence block */
+    border-radius: 4px;    /* Optional: rounded corners for the block */
+    vertical-align: top;   /* Align blocks from their top edge */
+    /* transition: background-color 0.2s ease; /* Optional: smooth bg transition on hover */
+}
+
+/* Optional: Subtle background for sentence blocks on hover or by default */
+/*
+.theme-light .sentence-block { background-color: #f9f9f9; border: 1px solid #efefef;}
+.theme-dark .sentence-block { background-color: #333; border: 1px solid #444; }
+.theme-blue-neon .sentence-block { background-color: rgba(0, 30, 60, 0.5); border: 1px solid rgba(0, 100, 200, 0.7); }
+*/
+
+
+/* Spans within sentence-block (the actual text parts) */
+.sentence-block span { /* This targets all spans including colored ones and the tooltip */
+    display: inline; /* Default for span, but good to be explicit */
+}
+
+.highlight-yellow-typed,
+.highlight-red-pasted,
+.highlight-green-corrected {
+    /* Your existing background and color styles */
+    /* background-color: #fffacd; color: black; (example) */
+    padding: 1px 0; /* Minimal vertical padding if needed */
+    white-space: pre-wrap; /* Crucial: Respects newlines and spaces within the text */
+}
+
+/* Styles for the always-visible tooltip data */
+.tooltip-visible-data {
+    display: inline; /* Keep it on the same line as sentence text */
+    font-size: 0.8em;
+    margin-left: 0.5em; /* Space it from the sentence text */
+    font-style: italic;
+    padding: 1px 4px;
+    border-radius: 3px;
+    opacity: 0.85; /* Make it slightly less prominent */
+}
+
+/* Theme-specific styling for the visible tooltip */
+.theme-light .tooltip-visible-data {
+    color: #555;
+    background-color: rgba(0,0,0,0.04);
+}
+.theme-dark .tooltip-visible-data {
+    color: #bbb;
+    background-color: rgba(255,255,255,0.08);
+}
+.theme-blue-neon .tooltip-visible-data {
+    color: #a0d8ff; /* Lighter blue for text */
+    background-color: rgba(0, 50, 100, 0.4); /* Darker, semi-transparent blue */
+    /* border: 1px solid rgba(0, 120, 255, 0.3); */
+}
+
+.live-sentence {
+    /* Optional: Slightly different style for the live sentence block */
+    /* box-shadow: 0 0 5px rgba(0, 150, 255, 0.5); */
+}
+.live-sentence .tooltip-visible-data {
+    opacity: 0.7; /* Make live tooltip even more subtle */
+}
+
+
+.btn svg {
+    width: 16px; /* Already in your CSS, ensure it's there */
+    height: 16px; /* Already in your CSS, ensure it's there */
+    stroke: var(--icon-stroke-color); /* Default for .btn */
+}
+
+/* ADD THIS RULE (or modify existing .btn-primary rules if you have them for svg): */
+.btn-primary svg {
+    stroke: var(--btn-primary-text); /* Override for .btn-primary, to match its text color */
+}
+
+.btn:hover svg, .theme-btn:hover svg, .theme-btn-dashboard:hover svg {
+    stroke: var(--btn-primary-text); /* This should already be in your CSS */
+}
+
+.theme-controls .theme-btn svg {
+    stroke: currentColor; /* This should already be in your CSS, specific for theme buttons */
+    /* width: 16px; height: 16px; are also defined for these specifically or inherited */
+}
+
+.theme-btn.active-theme svg, .theme-btn-dashboard.active-theme svg {
+    stroke: var(--btn-primary-text) !important; /* This should already be in your CSS */
+}
+
+
+
+
+#highlighted-output-container {
+    /* Ensure it allows children to flow and wrap as blocks or inline-blocks */
+    padding: 10px; /* Add some padding if not already there */
+    line-height: 1; /* Reset line-height for the container if it interferes */
+}
+
+.segment-wrapper {
+    display: inline-block; /* Segments flow inline but act as blocks */
+    position: relative;
+    margin: 25px 5px 5px 5px; /* Top margin for tooltip, others for spacing */
+    vertical-align: top; /* Align blocks from their top edge */
+}
+
+.segment-text-content {
+    display: block; /* Text content takes full width of its color block */
+    padding: 4px 6px;
+    border-radius: 3px;
+    color: #000000 !important; /* Ensure black text on colored backgrounds for these segments */
+    font-size: 1em; /* Match editor font size or adjust as needed */
+    line-height: 1.5; /* Normal line height for text within segment */
+    white-space: pre-wrap; /* Preserve spaces and newlines within the segment text */
+}
+
+.segment-tooltip {
+    position: absolute;
+    bottom: 100%; /* Position directly above the wrapper's top edge */
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 4px; /* Space between tooltip and segment block */
+    padding: 3px 6px;
+    background-color: var(--editor-bg); /* Use theme variable for background */
+    border: 1px solid var(--border-color); /* Use theme variable for border */
+    color: var(--text-primary); /* Use theme variable for text */
+    border-radius: 4px;
+    font-size: 0.75em;
+    white-space: nowrap;
+    z-index: 10; /* Ensure tooltip is above segment text */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Ensure theme specific colors for tooltip text/bg if needed */
+body.theme-dark .segment-tooltip {
+    background-color: #3a3f4b; /* Example dark tooltip background */
+    border-color: #505562;
+    color: #e0e0e0;
+}
+body.theme-blue-neon .segment-tooltip {
+    background-color: #001f3f; /* Dark blue neon tooltip background */
+    border-color: var(--text-secondary);
+    color: var(--text-primary);
+    box-shadow: 0 0 3px var(--text-secondary);
+}
+#highlighted-output-container {
+    /* Ensure it allows children to flow and wrap as blocks or inline-blocks */
+    padding: 10px; /* Add some padding if not already there */
+    line-height: 1; /* Reset line-height for the container if it interferes */
+}
+
+.segment-wrapper {
+    display: inline-block; /* Segments flow inline but act as blocks */
+    position: relative;
+    margin: 25px 5px 5px 5px; /* Top margin for tooltip, others for spacing */
+    vertical-align: top; /* Align blocks from their top edge */
+}
+
+.segment-text-content {
+    display: block; /* Text content takes full width of its color block */
+    padding: 4px 6px;
+    border-radius: 3px;
+    color: #000000 !important; /* Ensure black text on colored backgrounds for these segments */
+    font-size: 1em; /* Match editor font size or adjust as needed */
+    line-height: 1.5; /* Normal line height for text within segment */
+    white-space: pre-wrap; /* Preserve spaces and newlines within the segment text */
+}
+
+.segment-tooltip {
+    position: absolute;
+    bottom: 100%; /* Position directly above the wrapper's top edge */
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 4px; /* Space between tooltip and segment block */
+    padding: 3px 6px;
+    background-color: var(--editor-bg); /* Use theme variable for background */
+    border: 1px solid var(--border-color); /* Use theme variable for border */
+    color: var(--text-primary); /* Use theme variable for text */
+    border-radius: 4px;
+    font-size: 0.75em;
+    white-space: nowrap;
+    z-index: 10; /* Ensure tooltip is above segment text */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Ensure theme specific colors for tooltip text/bg if needed */
+body.theme-dark .segment-tooltip {
+    background-color: #3a3f4b; /* Example dark tooltip background */
+    border-color: #505562;
+    color: #e0e0e0;
+}
+body.theme-blue-neon .segment-tooltip {
+    background-color: #001f3f; /* Dark blue neon tooltip background */
+    border-color: var(--text-secondary);
+    color: var(--text-primary);
+    box-shadow: 0 0 3px var(--text-secondary);
+}
+
+
+</style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <span></span>
+        </div>
+        <div class="actions-group">
+            <button class="btn btn-primary" id="analysisButton"> <!-- Made primary -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+                Analysis
+            </button>
+            <button class="btn" id="printButton">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                    <rect x="6" y="14" width="12" height="8"></rect>
+                </svg>
+                Print Input
+            </button>
+            <div class="theme-controls">
+                <button class="btn theme-btn" id="themeLightBtn" title="Light Theme">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+                <button class="btn theme-btn" id="themeDarkBtn" title="Dark Theme">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+                <button class="btn theme-btn" id="themeBlueNeonBtn" title="Blue Neon Theme">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="input-area">
+            <textarea id="jsEditor" placeholder="Start typing here... Your activity will be tracked."style="opacity: 0.3"></textarea>
+            <div id="highlighted-output-container"></div>
+        </div>
+        <div class="stats-bar">
+            <div>Session Time: <span id="statSessionTime">0s</span></div>
+            <div>Typed Chars: <span id="statTypedChars">0</span></div>
+            <div>Pasted Chars: <span id="statPastedChars">0</span></div>
+            <div>Avg. Speed: <span id="statAvgSpeed">0 WPM</span></div>
+            <div>Backspaces: <span id="statBackspaces">0</span></div>
+            <div>Deletes: <span id="statDeletes">0</span></div>
+            <div>Pastes: <span id="statPasteCount">0</span></div>
+        </div>
+    </div>
+
+    <!-- Dashboard Modal -->
+    <div class="modal-overlay" id="dashboardModalOverlay">
+        <div class="dashboard-modal-content">
+            <div class="dashboard-modal-header">
+                <h3>Tracking Dashboard</h3>
+                <button class="dashboard-modal-close-btn" id="closeDashboardModalBtn">×</button>
+            </div>
+            <div class="dashboard-modal-body">
+                <iframe id="dashboardFrame" src="about:blank"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>
